@@ -1,6 +1,15 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { http } from "wagmi";
-import { l1Chain, l2Chain } from "./chains";
+import { http, fallback } from "wagmi";
+import { l1Chain, l2Chain, L1_RPCS, L2_RPCS } from "./chains";
+
+// Build a viem `fallback` transport from a list of RPC URLs. `rank` makes viem probe
+// them and prefer the fastest live endpoint, automatically failing over if one dies.
+function rpcFallback(urls: string[]) {
+  return fallback(
+    urls.map((url) => http(url)),
+    { rank: true, retryCount: 2 },
+  );
+}
 
 // RainbowKit needs a WalletConnect Cloud project id. RainbowKit rejects empty/short
 // ids, so we fall back to a placeholder 32-char hex string that lets injected wallets
@@ -15,8 +24,8 @@ export const wagmiConfig = getDefaultConfig({
   projectId,
   chains: [l1Chain, l2Chain],
   transports: {
-    [l1Chain.id]: http(),
-    [l2Chain.id]: http(),
+    [l1Chain.id]: rpcFallback(L1_RPCS),
+    [l2Chain.id]: rpcFallback(L2_RPCS),
   },
   ssr: true,
 });

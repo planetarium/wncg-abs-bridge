@@ -7,12 +7,13 @@ import {
   useSwitchChain,
 } from "wagmi";
 import { getWalletClient, waitForTransactionReceipt } from "wagmi/actions";
-import { createPublicClient, http, parseUnits } from "viem";
+import { createPublicClient, http, fallback, parseUnits } from "viem";
 import { walletActionsL1, walletActionsL2, publicActionsL2 } from "viem/zksync";
 import { wagmiConfig } from "./wagmi";
 import {
   l1Chain,
   l2Chain,
+  L2_RPCS,
   WNCG,
   WNCG_L1_ADDRESS,
   WNCG_L2_ADDRESS,
@@ -90,9 +91,13 @@ export function useBridge(direction: Direction) {
             await getWalletClient(wagmiConfig, { chainId: l1Chain.id })
           ).extend(walletActionsL1());
           // Dedicated L2 (Abstract) reader for the deposit estimation/Bridgehub queries.
+          // Same fallback list as the app so a dead RPC doesn't block deposits.
           const l2PublicClient = createPublicClient({
             chain: l2Chain,
-            transport: http(),
+            transport: fallback(
+              L2_RPCS.map((url) => http(url)),
+              { rank: true, retryCount: 2 },
+            ),
           }).extend(publicActionsL2());
 
           setStatus({ kind: "approving" });
