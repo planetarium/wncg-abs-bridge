@@ -7,17 +7,68 @@ import {
   useSwitchChain,
 } from "wagmi";
 import { getWalletClient, waitForTransactionReceipt } from "wagmi/actions";
-import { createPublicClient, http, fallback, parseUnits } from "viem";
+import {
+  createPublicClient,
+  createWalletClient,
+  custom,
+  http,
+  parseUnits,
+  type EIP1193RequestFn,
+  type Transport,
+} from "viem";
 import { walletActionsL1, walletActionsL2, publicActionsL2 } from "viem/zksync";
-import { wagmiConfig } from "./wagmi";
+import { wagmiConfig, rpcFallback } from "./wagmi";
 import {
   l1Chain,
   l2Chain,
+  L1_RPCS,
   L2_RPCS,
   WNCG,
   WNCG_L1_ADDRESS,
   WNCG_L2_ADDRESS,
 } from "./chains";
+
+// JSON-RPC methods that must be served by the wallet (signing, account state, sending).
+// Everything else (reads: eth_call, eth_getBalance, gas estimation, receipts, ...) is
+// routed to our own fallback RPC set. This is the fix for "L1_NULLIFIER reverted 403":
+// viem's deposit reads L1 system contracts through the wallet client, and some wallet
+// RPCs reject those reads with 403. Splitting reads off the wallet avoids that entirely.
+const WALLET_ONLY_METHODS = new Set([
+  "eth_sendTransaction",
+  "eth_sendRawTransaction",
+  "eth_sign",
+  "eth_signTypedData",
+  "eth_signTypedData_v4",
+  "eth_signTransaction",
+  "personal_sign",
+  "eth_accounts",
+  "eth_requestAccounts",
+  "eth_chainId",
+  "wallet_switchEthereumChain",
+  "wallet_addEthereumChain",
+  "wallet_watchAsset",
+  "wallet_getPermissions",
+  "wallet_requestPermissions",
+]);
+
+// A transport that sends signing/account/sending calls to `walletRequest` (the wallet)
+// and routes all read calls to `readTransport` (our ranked fallback RPCs).
+function splitTransport(
+  walletRequest: EIP1193RequestFn,
+  readTransport: Transport,
+): Transport {
+  return (params) => {
+    const read = readTransport(params);
+    return custom({
+      async request(args) {
+        if (WALLET_ONLY_METHODS.has(args.method)) {
+          return walletRequest(args as Parameters<EIP1193RequestFn>[0]);
+        }
+        return read.request(args);
+      },
+    })(params);
+  };
+}
 import { erc20Abi } from "./erc20";
 
 export type Direction = "deposit" | "withdraw";
@@ -87,17 +138,25 @@ export function useBridge(direction: Direction) {
 
         if (direction === "deposit") {
           // L1 -> L2: viem zksync deposit handles approve + Bridgehub request.
-          const walletClient = (
-            await getWalletClient(wagmiConfig, { chainId: l1Chain.id })
-          ).extend(walletActionsL1());
+          // Rebuild the wallet client with a split transport so that signing/sending
+          // goes to the wallet but every read (incl. the L1_NULLIFIER lookup) goes to
+          // our own L1 RPCs — wallet RPCs were 403-ing those reads.
+          const rawWalletClient = await getWalletClient(wagmiConfig, {
+            chainId: l1Chain.id,
+          });
+          const walletClient = createWalletClient({
+            account: rawWalletClient.account,
+            chain: l1Chain,
+            transport: splitTransport(
+              rawWalletClient.transport.request as EIP1193RequestFn,
+              rpcFallback(L1_RPCS),
+            ),
+          }).extend(walletActionsL1());
+
           // Dedicated L2 (Abstract) reader for the deposit estimation/Bridgehub queries.
-          // Same fallback list as the app so a dead RPC doesn't block deposits.
           const l2PublicClient = createPublicClient({
             chain: l2Chain,
-            transport: fallback(
-              L2_RPCS.map((url) => http(url)),
-              { rank: true, retryCount: 2 },
-            ),
+            transport: rpcFallback(L2_RPCS),
           }).extend(publicActionsL2());
 
           setStatus({ kind: "approving" });

@@ -4,7 +4,7 @@ import { l1Chain, l2Chain, L1_RPCS, L2_RPCS } from "./chains";
 
 // Build a viem `fallback` transport from a list of RPC URLs. `rank` makes viem probe
 // them and prefer the fastest live endpoint, automatically failing over if one dies.
-function rpcFallback(urls: string[]) {
+export function rpcFallback(urls: string[]) {
   return fallback(
     urls.map((url) => http(url)),
     { rank: true, retryCount: 2 },
