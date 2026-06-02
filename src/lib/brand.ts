@@ -19,7 +19,6 @@ export const colors = {
 
 export const links = {
   planetarium: "https://www.planetariumlabs.com/",
-  nineCorp: "https://nine-corporation.com/",
   nineChronicles: "https://nine-chronicles.com/",
   abstract: "https://abs.xyz/",
   github: "https://github.com/planetarium",

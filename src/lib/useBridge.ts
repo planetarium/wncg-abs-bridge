@@ -177,9 +177,21 @@ export function useBridge(direction: Direction) {
           setStatus({ kind: "success", hash, direction });
         } else {
           // L2 -> L1: burn on Abstract, emit L2->L1 message. Finalize on L1 later.
-          const walletClient = (
-            await getWalletClient(wagmiConfig, { chainId: l2Chain.id })
-          ).extend(walletActionsL2());
+          // viem's withdraw reads zksync system RPCs (zks_L1ChainId,
+          // zks_getBridgehubContract, ...) through the L2 client; wallet RPCs reject
+          // those ("method zks_L1ChainId does not exist"). Split the transport so
+          // signing/sending stays on the wallet and those reads go to our L2 RPCs.
+          const rawWalletClient = await getWalletClient(wagmiConfig, {
+            chainId: l2Chain.id,
+          });
+          const walletClient = createWalletClient({
+            account: rawWalletClient.account,
+            chain: l2Chain,
+            transport: splitTransport(
+              rawWalletClient.transport.request as EIP1193RequestFn,
+              rpcFallback(L2_RPCS),
+            ),
+          }).extend(walletActionsL2());
 
           const hash = await walletClient.withdraw({
             token: WNCG_L2_ADDRESS,

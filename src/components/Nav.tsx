@@ -18,7 +18,7 @@ export default function Nav() {
       }}
     >
       <a
-        href={links.nineCorp}
+        href={links.nineChronicles}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="WNCG Bridge"
