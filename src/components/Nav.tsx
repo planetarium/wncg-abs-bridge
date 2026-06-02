@@ -21,15 +21,15 @@ export default function Nav() {
         href={links.nineCorp}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Nine Corporation"
+        aria-label="WNCG Bridge"
         className="flex items-center gap-3"
       >
         <img
-          src="/assets/logo-mark.svg"
-          alt="Nine Corporation"
-          width={30}
-          height={30}
-          className="h-[26px] w-auto"
+          src="/assets/wncg-white.png"
+          alt="WNCG"
+          width={28}
+          height={28}
+          className="h-[26px] w-[26px]"
         />
         <span
           className="hidden font-mono text-[11px] uppercase tracking-[0.18em] sm:inline"
