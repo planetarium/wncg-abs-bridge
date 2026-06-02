@@ -69,10 +69,29 @@ export function useBridge(direction: Direction) {
 
   const reset = useCallback(() => setStatus({ kind: "idle" }), []);
 
+  // Used inside bridge(): set "switching", flip the chain, and let the caller's next
+  // step overwrite status. Does NOT reset to idle (the deposit/withdraw flow continues).
   const ensureSourceChain = useCallback(async () => {
     if (chain?.id === sourceChain.id) return;
     setStatus({ kind: "switching" });
     await switchChainAsync({ chainId: sourceChain.id });
+  }, [chain?.id, sourceChain.id, switchChainAsync]);
+
+  // Used by the standalone "Switch to <chain>" button. Unlike ensureSourceChain this
+  // resets to idle when done — otherwise the spinner is stuck on "switching" forever
+  // because nothing else runs afterward.
+  const switchToSource = useCallback(async () => {
+    if (chain?.id === sourceChain.id) {
+      setStatus({ kind: "idle" });
+      return;
+    }
+    setStatus({ kind: "switching" });
+    try {
+      await switchChainAsync({ chainId: sourceChain.id });
+      setStatus({ kind: "idle" });
+    } catch (e) {
+      setStatus({ kind: "error", message: errMessage(e) });
+    }
   }, [chain?.id, sourceChain.id, switchChainAsync]);
 
   const bridge = useCallback(
@@ -206,6 +225,7 @@ export function useBridge(direction: Direction) {
       bridge,
       onWrongChain,
       ensureSourceChain,
+      switchToSource,
       sourceChain,
       balance: {
         value: balance.data as bigint | undefined,
@@ -213,6 +233,6 @@ export function useBridge(direction: Direction) {
         refetch: balance.refetch,
       },
     }),
-    [status, reset, bridge, onWrongChain, ensureSourceChain, sourceChain, balance.data, balance.isLoading, balance.refetch],
+    [status, reset, bridge, onWrongChain, ensureSourceChain, switchToSource, sourceChain, balance.data, balance.isLoading, balance.refetch],
   );
 }

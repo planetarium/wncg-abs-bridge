@@ -269,13 +269,20 @@ export default function BridgeCard() {
               </button>
             )}
           </ConnectButton.Custom>
-        ) : bridge.onWrongChain && bridge.status.kind === "idle" ? (
+        ) : bridge.onWrongChain &&
+          (bridge.status.kind === "idle" || bridge.status.kind === "switching") ? (
           <button
             className="ghost-action"
             type="button"
-            onClick={() => bridge.ensureSourceChain()}
+            disabled={bridge.status.kind === "switching"}
+            onClick={() => bridge.switchToSource()}
           >
-            Switch to {from.name}
+            {bridge.status.kind === "switching" && (
+              <span className="spinner-ring mr-3" aria-hidden="true" />
+            )}
+            {bridge.status.kind === "switching"
+              ? "Switching…"
+              : `Switch to ${from.name}`}
           </button>
         ) : (
           <button
