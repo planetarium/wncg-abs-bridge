@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
@@ -14,6 +14,7 @@ import {
   l2TxUrl,
 } from "@/lib/chains";
 import { useBridge, type Direction } from "@/lib/useBridge";
+import { useWithdrawals } from "@/lib/withdrawals";
 
 function ChainRow({
   label,
@@ -52,11 +53,35 @@ function ChainRow({
 }
 
 export default function BridgeCard() {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const [direction, setDirection] = useState<Direction>("deposit");
   const [amount, setAmount] = useState("");
 
   const bridge = useBridge(direction);
+  const withdrawals = useWithdrawals(address);
+
+  // Record every successful withdrawal in localStorage so the Claim panel can
+  // resurface it later — the user never has to keep the L2 tx hash themselves.
+  const lastAmountRef = useRef("");
+  useEffect(() => {
+    lastAmountRef.current = amount;
+  }, [amount]);
+  const recordedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      bridge.status.kind === "success" &&
+      bridge.status.direction === "withdraw" &&
+      address &&
+      recordedRef.current !== bridge.status.hash
+    ) {
+      recordedRef.current = bridge.status.hash;
+      withdrawals.add({
+        l2Hash: bridge.status.hash,
+        amount: lastAmountRef.current,
+        createdAt: Date.now(),
+      });
+    }
+  }, [bridge.status, address, withdrawals]);
 
   const from = direction === "deposit" ? l1Chain : l2Chain;
   const to = direction === "deposit" ? l2Chain : l1Chain;

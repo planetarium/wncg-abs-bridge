@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   description:
     "Bridge Wrapped NCG (WNCG) between Ethereum and Abstract, a ZK Stack chain. Connect your wallet and move WNCG across L1 and L2.",
   icons: {
-    icon: "/assets/favicon.svg",
-    apple: "/assets/favicon.svg",
+    icon: "/assets/wncg-icon.png",
+    apple: "/assets/wncg-icon.png",
   },
 };
 

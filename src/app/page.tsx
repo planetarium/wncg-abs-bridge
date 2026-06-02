@@ -5,6 +5,7 @@
 import { motion } from "framer-motion";
 import Nav from "@/components/Nav";
 import BridgeCard from "@/components/BridgeCard";
+import ClaimPanel from "@/components/ClaimPanel";
 import { colors, links } from "@/lib/brand";
 import { l1Chain, l2Chain } from "@/lib/chains";
 
@@ -61,12 +62,13 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* bridge card */}
+          {/* bridge card + claim panel */}
           <motion.div
             {...fadeUp(0.2)}
-            className="flex w-full justify-center lg:w-auto lg:justify-end"
+            className="flex w-full flex-col items-center lg:w-auto lg:items-end"
           >
             <BridgeCard />
+            <ClaimPanel />
           </motion.div>
         </section>
 
