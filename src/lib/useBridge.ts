@@ -116,6 +116,21 @@ export function useBridge(direction: Direction) {
             transport: rpcFallback(L2_RPCS),
           }).extend(publicActionsL2());
 
+          // The L2 base cost (the ETH that must accompany the deposit to pay for L2
+          // execution) is computed from the L1 gas price. viem's default estimate can
+          // come in too low when the L1 base fee ticks up between estimation and send,
+          // which makes the Bridgehub revert with MsgValueTooLow (#-39000) and the tx
+          // sits pending / fails simulation. We pin maxFeePerGas to ~3x the current L1
+          // base fee so the base cost (and thus mintValue) is computed with headroom.
+          const l1Public = createPublicClient({
+            chain: l1Chain,
+            transport: rpcFallback(L1_RPCS),
+          });
+          const block = await l1Public.getBlock({ blockTag: "latest" });
+          const baseFee = block.baseFeePerGas ?? 1_000_000_000n;
+          const priority = 1_500_000_000n; // 1.5 gwei tip
+          const maxFeePerGas = baseFee * 3n + priority;
+
           setStatus({ kind: "approving" });
           const hash = await walletClient.deposit({
             client: l2PublicClient,
@@ -125,6 +140,12 @@ export function useBridge(direction: Direction) {
             approveToken: true,
             approveBaseToken: true,
             refundRecipient: address,
+            maxFeePerGas,
+            maxPriorityFeePerGas: priority,
+            // Pin a generous L2 gas limit so the base cost is never under-computed if
+            // zks_estimateGasL1ToL2 returns a low estimate (a default-bridge ERC-20
+            // deposit needs well under 3M L2 gas; the unused portion is refunded).
+            l2GasLimit: 3_000_000n,
           });
           setStatus({ kind: "pending", hash });
           await waitForTransactionReceipt(wagmiConfig, {
