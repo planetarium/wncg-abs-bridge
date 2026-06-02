@@ -202,6 +202,38 @@ export default function BridgeCard() {
         )}
       </div>
 
+      {/* per-direction notice (timing expectations BEFORE submitting) */}
+      <div
+        className="mt-4 rounded-md p-3"
+        style={{
+          border: `1px solid ${colors.line}`,
+          background:
+            direction === "withdraw"
+              ? "rgba(255,157,61,0.07)"
+              : "rgba(255,255,255,0.02)",
+        }}
+      >
+        {direction === "deposit" ? (
+          <p className="font-mono text-[11px] leading-relaxed" style={{ color: colors.muted }}>
+            <span style={{ color: colors.amber }}>≈ a few minutes.</span> First-time
+            deposits ask for two wallet signatures — an ERC-20{" "}
+            <span style={{ color: colors.cream }}>approve</span>, then the{" "}
+            <span style={{ color: colors.cream }}>deposit</span>. Funds mint on{" "}
+            {l2Chain.name} after the L1 tx is finalized.
+          </p>
+        ) : (
+          <p className="font-mono text-[11px] leading-relaxed" style={{ color: colors.muted }}>
+            <span style={{ color: colors.amber }}>⚠ Withdrawals are slow.</span> After
+            the L2 transaction, the ZK proof must be published and a security delay
+            elapses — typically{" "}
+            <span style={{ color: colors.cream }}>~3 hours, and up to ~24h</span> when
+            the network is busy. You then{" "}
+            <span style={{ color: colors.cream }}>claim on L1</span> in a separate
+            transaction. Funds are not lost during the wait.
+          </p>
+        )}
+      </div>
+
       {/* action */}
       <div className="mt-6">
         {!isConnected ? (
@@ -268,7 +300,7 @@ export default function BridgeCard() {
             <p className="mt-1 font-mono text-[11px]" style={{ color: colors.muted }}>
               {bridge.status.direction === "deposit"
                 ? "Funds arrive on Abstract once the L1 tx is finalized (a few minutes)."
-                : "Withdrawals must be finalized on L1 after the L2 proof is published (this can take hours)."}
+                : "Your WNCG is now burning on L2. Once the ZK proof is published (~3h, up to ~24h when busy) you must claim it on L1 in a separate transaction."}
             </p>
             <a
               href={
