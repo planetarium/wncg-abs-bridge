@@ -1,5 +1,5 @@
 diff --git a/node_modules/qr/index.js b/node_modules/qr/index.js
-index 40c38fd..9397b26 100644
+index 40c38fd..5578ebe 100644
 --- a/node_modules/qr/index.js
 +++ b/node_modules/qr/index.js
 @@ -405,8 +405,13 @@ export class Bitmap {
@@ -17,3 +17,19 @@ index 40c38fd..9397b26 100644
          const height = this.height + 2 * border;
          const width = this.width + 2 * border;
          const out = new Bitmap({ height, width });
+@@ -1562,9 +1567,13 @@ export function encodeQR(text, output = 'raw', opts = {}) {
+     // 2-module default to avoid changing encoder output; callers that need a
+     // standards-conformant quiet zone must pass `border: 4` explicitly.
+     const border = _opts.border === undefined ? 2 : _opts.border;
+-    if (!Number.isSafeInteger(border) || border <= 0)
++    // Patched: allow border===0 ("no quiet zone") instead of throwing. RainbowKit's
++    // `cuer` passes border:0, which otherwise crashes the desktop WalletConnect QR
++    // with "invalid border=0" and takes the whole app down.
++    if (!Number.isSafeInteger(border) || border < 0)
+         throw new Error(`invalid border=${border}`);
+-    res = res.border(border, false); // Add border
++    if (border > 0)
++        res = res.border(border, false); // Add border
+     if (_opts.scale !== undefined)
+         res = res.scale(_opts.scale); // Scale image
+     if (output === 'raw')
