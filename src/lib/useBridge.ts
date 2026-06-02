@@ -117,11 +117,19 @@ export function useBridge(direction: Direction) {
           }).extend(publicActionsL2());
 
           // The L2 base cost (the ETH that must accompany the deposit to pay for L2
-          // execution) is computed from the L1 gas price. viem's default estimate can
-          // come in too low when the L1 base fee ticks up between estimation and send,
-          // which makes the Bridgehub revert with MsgValueTooLow (#-39000) and the tx
-          // sits pending / fails simulation. We pin maxFeePerGas to ~3x the current L1
-          // base fee so the base cost (and thus mintValue) is computed with headroom.
+          // execution) = bridgehub.l2TransactionBaseCost(chainId, gasPrice, l2GasLimit,
+          // gasPerPubdata). viem under-computes it two ways vs the official zksync-ethers
+          // SDK (which zksync-cli uses), causing the Bridgehub to revert with
+          // MsgValueTooLow (#-39000) — failed simulation + stuck-pending tx:
+          //
+          //   1. l2GasLimit: viem trusts zks_estimateGasL1ToL2 (~500k here), but
+          //      zksync-ethers enforces L1_RECOMMENDED_MIN_ERC20_DEPOSIT_GAS_LIMIT =
+          //      1,000,000 and then scales it ×1.2. We pin 3,000,000 (well above that
+          //      floor); the unused portion is refunded to refundRecipient.
+          //   2. gasPrice: the L1 base fee can tick up between estimation and send, so
+          //      we pin maxFeePerGas to ~3x the current base fee for headroom.
+          //
+          // gasPerPubdataByte is the zksync-required 800.
           const l1Public = createPublicClient({
             chain: l1Chain,
             transport: rpcFallback(L1_RPCS),
@@ -142,10 +150,8 @@ export function useBridge(direction: Direction) {
             refundRecipient: address,
             maxFeePerGas,
             maxPriorityFeePerGas: priority,
-            // Pin a generous L2 gas limit so the base cost is never under-computed if
-            // zks_estimateGasL1ToL2 returns a low estimate (a default-bridge ERC-20
-            // deposit needs well under 3M L2 gas; the unused portion is refunded).
             l2GasLimit: 3_000_000n,
+            gasPerPubdataByte: 800n,
           });
           setStatus({ kind: "pending", hash });
           await waitForTransactionReceipt(wagmiConfig, {
