@@ -1,0 +1,19 @@
+diff --git a/node_modules/qr/index.js b/node_modules/qr/index.js
+index 40c38fd..9397b26 100644
+--- a/node_modules/qr/index.js
++++ b/node_modules/qr/index.js
+@@ -405,8 +405,13 @@ export class Bitmap {
+     border(border = 2, value) {
+         // `border` is used both as output-size delta and as embed coordinate; keep
+         // it a positive safe integer before those paths allocate or normalize.
+-        if (!Number.isSafeInteger(border) || border <= 0)
++        // Patched: border===0 means "no border" — return the bitmap unchanged instead
++        // of throwing. RainbowKit's `cuer` passes border:0, which otherwise crashes the
++        // whole app ("invalid border=0") when the desktop WalletConnect QR renders.
++        if (!Number.isSafeInteger(border) || border < 0)
+             throw new Error(`Bitmap.border: invalid size=${border}`);
++        if (border === 0)
++            return this;
+         const height = this.height + 2 * border;
+         const width = this.width + 2 * border;
+         const out = new Bitmap({ height, width });
