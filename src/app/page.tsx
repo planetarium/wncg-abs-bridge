@@ -1,20 +1,14 @@
-"use client";
-
 /* eslint-disable @next/next/no-img-element */
 
-import { motion } from "framer-motion";
 import Nav from "@/components/Nav";
-import BridgeCard from "@/components/BridgeCard";
-import ClaimPanel from "@/components/ClaimPanel";
+import BridgePanel from "@/components/BridgePanel";
 import { colors, links } from "@/lib/brand";
 import { l1Chain, l2Chain } from "@/lib/chains";
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 28 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const, delay },
-});
-
+// Server component: the hero copy + footer are static HTML rendered on the server, so
+// the LCP element (the headline) paints on first byte. Entrance motion is pure CSS
+// (.fade-up) which animates immediately without waiting for JS hydration. The heavy
+// web3 bridge UI is isolated in BridgePanel (dynamic, ssr:false).
 export default function Home() {
   return (
     <>
@@ -32,17 +26,13 @@ export default function Home() {
         <section className="mx-auto flex min-h-screen max-w-screen-2xl flex-col items-center gap-12 px-4 pb-16 pt-32 md:px-8 lg:flex-row lg:items-center lg:justify-between lg:gap-16 lg:px-12 lg:pt-40">
           {/* copy */}
           <div className="max-w-xl text-center lg:text-left">
-            <motion.h1
-              {...fadeUp(0)}
-              className="section-title mb-8"
-            >
+            <h1 className="section-title fade-up mb-8">
               Move <em>WNCG</em> between<br />
               Ethereum and <em>Abstract</em>.
-            </motion.h1>
+            </h1>
 
-            <motion.div
-              {...fadeUp(0.15)}
-              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-mono text-[11px] uppercase tracking-[0.14em] lg:justify-start"
+            <div
+              className="fade-up fade-up-1 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-mono text-[11px] uppercase tracking-[0.14em] lg:justify-start"
               style={{ color: colors.dim }}
             >
               <span>
@@ -59,17 +49,11 @@ export default function Home() {
               >
                 What is Abstract? ↗
               </a>
-            </motion.div>
+            </div>
           </div>
 
-          {/* bridge card + claim panel */}
-          <motion.div
-            {...fadeUp(0.2)}
-            className="flex w-full flex-col items-center lg:w-auto lg:items-end"
-          >
-            <BridgeCard />
-            <ClaimPanel />
-          </motion.div>
+          {/* bridge card + claim panel (heavy web3 bundle, lazy) */}
+          <BridgePanel />
         </section>
 
         <footer

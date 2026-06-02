@@ -118,7 +118,7 @@ function ClaimRow({
               disabled={claiming}
               onClick={() => claim(record.l2Hash)}
             >
-              {claiming && <span className="spin mr-2 inline-block">◠</span>}
+              {claiming && <span className="spinner-ring mr-2" aria-hidden="true" />}
               {status.kind === "switching" ? "Switch network…" : "Claim on L1"}
             </button>
           ) : (

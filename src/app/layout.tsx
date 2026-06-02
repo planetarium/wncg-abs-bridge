@@ -183,6 +183,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <head>
+        {/* Warm up the WalletConnect/Reown origins the bridge talks to on connect. */}
+        <link rel="preconnect" href="https://pulse.walletconnect.org" />
+        <link rel="preconnect" href="https://api.web3modal.org" />
+        <link rel="dns-prefetch" href="https://explorer-api.walletconnect.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

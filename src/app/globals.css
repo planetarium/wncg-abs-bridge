@@ -204,6 +204,36 @@ button:focus-visible {
   }
 }
 
+/* CSS-only entrance — runs immediately on first paint (no JS hydration wait),
+   so it never blocks LCP the way a framer-motion initial:opacity-0 does. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.fade-up-1 {
+  animation-delay: 0.1s;
+}
+.fade-up-2 {
+  animation-delay: 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    animation: none;
+  }
+}
+
 /* --- bridge card chrome --- */
 
 .bridge-card {
@@ -374,6 +404,20 @@ button:focus-visible {
 
 .spin {
   animation: spin 0.9s linear infinite;
+}
+
+/* Circular spinner — a bordered ring rotates around its true geometric center,
+   unlike a glyph (◠) whose rotation pivot sits off the visual center and wobbles. */
+.spinner-ring {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  animation: spin 0.7s linear infinite;
 }
 
 /* RainbowKit accent — keep its modal on-brand */

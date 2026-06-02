@@ -284,7 +284,7 @@ export default function BridgeCard() {
             disabled={!canSubmit}
             onClick={() => bridge.bridge(amount)}
           >
-            {busy && <span className="spin mr-3 inline-block">◠</span>}
+            {busy && <span className="spinner-ring mr-3" aria-hidden="true" />}
             {direction === "deposit"
               ? `Deposit ${WNCG.symbol}`
               : `Withdraw ${WNCG.symbol}`}
@@ -303,7 +303,7 @@ export default function BridgeCard() {
             className="mt-4 flex items-center gap-2 font-mono text-[12px]"
             style={{ color: colors.amber2 }}
           >
-            <span className="spin inline-block">◠</span>
+            <span className="spinner-ring" aria-hidden="true" />
             {statusLabel}
           </motion.div>
         )}
