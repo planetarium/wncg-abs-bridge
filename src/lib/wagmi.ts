@@ -1,4 +1,11 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import {
+  rabbyWallet,
+  metaMaskWallet,
+  walletConnectWallet,
+  coinbaseWallet,
+  rainbowWallet,
+} from "@rainbow-me/rainbowkit/wallets";
 import { http, fallback } from "wagmi";
 import { l1Chain, l2Chain, L1_RPCS, L2_RPCS } from "./chains";
 
@@ -19,10 +26,24 @@ const projectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
   "00000000000000000000000000000000";
 
+// Explicit wallet list so we control exactly what shows in the modal. Passing
+// `wallets` overrides RainbowKit's implicit default set, which now bundles
+// "Base Account" — dropped here since this bridge settles on Ethereum, not Base.
+// EOA wallets (Rabby/MetaMask) lead because deposits require signing on Ethereum L1.
 export const wagmiConfig = getDefaultConfig({
   appName: "WNCG Bridge",
   projectId,
   chains: [l1Chain, l2Chain],
+  wallets: [
+    {
+      groupName: "Recommended",
+      wallets: [rabbyWallet, metaMaskWallet, walletConnectWallet],
+    },
+    {
+      groupName: "More",
+      wallets: [coinbaseWallet, rainbowWallet],
+    },
+  ],
   transports: {
     [l1Chain.id]: rpcFallback(L1_RPCS),
     [l2Chain.id]: rpcFallback(L2_RPCS),
