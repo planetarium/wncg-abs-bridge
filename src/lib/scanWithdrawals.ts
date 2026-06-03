@@ -51,7 +51,11 @@ export async function scanWithdrawals(
   const found: WithdrawalRecord[] = [];
   for (let page = 1; page <= pages; page++) {
     const url = `${base}/transactions?address=${account}&limit=${perPage}&page=${page}`;
-    const res = await fetch(url, { headers: { accept: "application/json" } });
+    // Bound each request so a slow/hung explorer never leaves the UI "syncing" forever.
+    const res = await fetch(url, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
     if (!res.ok) throw new Error(`explorer ${res.status}`);
     const json = (await res.json()) as { items?: ExplorerTx[]; meta?: { totalPages?: number } };
     const items = json.items ?? [];

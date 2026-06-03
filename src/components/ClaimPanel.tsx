@@ -209,8 +209,10 @@ export default function ClaimPanel() {
     [records],
   );
 
-  // Hide entirely only when there's nothing to show AND nothing being discovered.
-  if (!isConnected || (records.length === 0 && !syncing)) return null;
+  // Only show the panel when there's actually something to claim/track. While the
+  // background chain scan runs with an empty cache, stay hidden — no point flashing an
+  // empty "looking for withdrawals" card that lingers when there's nothing to find.
+  if (!isConnected || records.length === 0) return null;
 
   const pending = records.filter((r) => !r.claimed).length;
 
@@ -239,15 +241,8 @@ export default function ClaimPanel() {
       </div>
 
       <p className="mb-4 font-mono text-[11px] leading-relaxed" style={{ color: colors.muted }}>
-        Your {WNCG.symbol} withdrawals are found on-chain automatically. Once one
-        matures, claim it on Ethereum to receive your tokens.
+        Once a withdrawal matures, claim it on Ethereum to receive your {WNCG.symbol}.
       </p>
-
-      {records.length === 0 && syncing && (
-        <p className="font-mono text-[11px]" style={{ color: colors.dim }}>
-          Looking for past withdrawals…
-        </p>
-      )}
 
       <div className="flex flex-col gap-3">
         <AnimatePresence initial={false}>
