@@ -55,3 +55,9 @@ export function l1TxUrl(hash: string) {
 export function l2TxUrl(hash: string) {
   return `${explorer.l2}/tx/${hash}`;
 }
+
+// Explorer token pages for WNCG on each layer.
+export const wncgTokenUrl = {
+  l1: `${explorer.l1}/token/${WNCG_L1_ADDRESS}`,
+  l2: `${explorer.l2}/token/${WNCG_L2_ADDRESS}#transactions`,
+} as const;

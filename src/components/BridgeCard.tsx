@@ -12,6 +12,7 @@ import {
   WNCG,
   l1TxUrl,
   l2TxUrl,
+  wncgTokenUrl,
 } from "@/lib/chains";
 import { useBridge, type Direction } from "@/lib/useBridge";
 import { useWithdrawals } from "@/lib/withdrawals";
@@ -20,10 +21,12 @@ function ChainRow({
   label,
   name,
   badge,
+  tokenUrl,
 }: {
   label: string;
   name: string;
   badge: string;
+  tokenUrl: string;
 }) {
   return (
     <div className="chain-pill">
@@ -44,9 +47,19 @@ function ChainRow({
         >
           {label}
         </span>
-        <span className="text-[15px] font-semibold" style={{ color: colors.cream }}>
+        <a
+          href={tokenUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={`View WNCG on ${name} explorer`}
+          className="inline-flex w-fit items-center gap-1 text-[15px] font-semibold transition-colors hover:text-amber"
+          style={{ color: colors.cream }}
+        >
           {name}
-        </span>
+          <span className="text-[10px]" style={{ color: colors.dim }}>
+            ↗
+          </span>
+        </a>
       </div>
     </div>
   );
@@ -165,13 +178,23 @@ export default function BridgeCard() {
 
       {/* from / swap / to */}
       <div className="relative flex flex-col gap-2">
-        <ChainRow label="From" name={from.name} badge={fromBadge} />
+        <ChainRow
+          label="From"
+          name={from.name}
+          badge={fromBadge}
+          tokenUrl={fromBadge === "L1" ? wncgTokenUrl.l1 : wncgTokenUrl.l2}
+        />
         <div className="my-[-6px] flex justify-center">
           <button className="swap-btn" onClick={flip} aria-label="Swap direction" type="button">
             ↓
           </button>
         </div>
-        <ChainRow label="To" name={to.name} badge={toBadge} />
+        <ChainRow
+          label="To"
+          name={to.name}
+          badge={toBadge}
+          tokenUrl={toBadge === "L1" ? wncgTokenUrl.l1 : wncgTokenUrl.l2}
+        />
       </div>
 
       {/* amount */}
