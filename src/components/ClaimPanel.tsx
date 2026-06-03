@@ -201,7 +201,7 @@ function ClaimRow({
 
 export default function ClaimPanel() {
   const { address, isConnected } = useAccount();
-  const { records, markClaimed, remove } = useWithdrawals(address);
+  const { records, syncing, markClaimed, remove } = useWithdrawals(address);
 
   // Show pending (unclaimed) first; keep claimed ones until dismissed.
   const sorted = useMemo(
@@ -209,7 +209,8 @@ export default function ClaimPanel() {
     [records],
   );
 
-  if (!isConnected || records.length === 0) return null;
+  // Hide entirely only when there's nothing to show AND nothing being discovered.
+  if (!isConnected || (records.length === 0 && !syncing)) return null;
 
   const pending = records.filter((r) => !r.claimed).length;
 
@@ -221,10 +222,11 @@ export default function ClaimPanel() {
     >
       <div className="mb-4 flex items-center justify-between">
         <span
-          className="font-mono text-[11px] uppercase tracking-[0.16em]"
+          className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em]"
           style={{ color: colors.amber }}
         >
           Claim on L1
+          {syncing && <span className="spinner-ring" aria-hidden="true" />}
         </span>
         {pending > 0 && (
           <span
@@ -237,9 +239,15 @@ export default function ClaimPanel() {
       </div>
 
       <p className="mb-4 font-mono text-[11px] leading-relaxed" style={{ color: colors.muted }}>
-        Withdrawals you started are tracked here. Once a withdrawal matures, claim it on{" "}
-        {WNCG.symbol === "WNCG" ? "Ethereum" : "L1"} to receive your tokens.
+        Your {WNCG.symbol} withdrawals are found on-chain automatically. Once one
+        matures, claim it on Ethereum to receive your tokens.
       </p>
+
+      {records.length === 0 && syncing && (
+        <p className="font-mono text-[11px]" style={{ color: colors.dim }}>
+          Looking for past withdrawals…
+        </p>
+      )}
 
       <div className="flex flex-col gap-3">
         <AnimatePresence initial={false}>
